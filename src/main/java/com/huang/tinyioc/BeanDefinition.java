@@ -8,6 +8,8 @@ public class BeanDefinition {
 
     private Class beanClass;
 
+    private ProperiesList properiesList;
+
     public BeanDefinition() {
     }
 
@@ -44,4 +46,11 @@ public class BeanDefinition {
         return bean;
     }
 
+    public ProperiesList getProperiesList() {
+        return properiesList;
+    }
+
+    public void setProperiesList(ProperiesList properiesList) {
+        this.properiesList = properiesList;
+    }
 }

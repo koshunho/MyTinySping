@@ -12,11 +12,11 @@ public abstract class AbstractBeanFactory implements BeanFactory{
         return map.get(name).getBean();
     }
 
-    public void registerBeanDefination(String name, BeanDefinition beanDefinition) {
+    public void registerBeanDefination(String name, BeanDefinition beanDefinition) throws NoSuchFieldException {
         Object bean = createBean(beanDefinition); //实例化
         beanDefinition.setBean(bean);
         map.put(name, beanDefinition);
     }
     //第二步：再通过Class对象的newInstance()方法创建此对象表示的类的一个新实例，即通过一个类名字符串得到类的实例。
-    protected abstract Object createBean(BeanDefinition beanDefinition);
+    protected abstract Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldException;
 }
