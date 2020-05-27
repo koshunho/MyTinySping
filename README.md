@@ -54,3 +54,57 @@ Step1中，我们是手动new一个bean的实例再放到容器中的。在这�
     }
 ```
 
+### Step 3：给bean赋值
+
+应该是给bean注入属性才对。
+
+在BeanDefination中增加一个字段ProperiesList properiesList
+```java
+//用一个List来保存自己申明的ProperyValue
+public class ProperiesList {
+    private final List<PropertyValue> list = new ArrayList<PropertyValue>();
+
+    public void addPropertyValue(PropertyValue pv){
+        list.add(pv);
+    }
+
+    public List<PropertyValue> getList() {
+        return list;
+    }
+}
+
+```
+
+```java
+//PropertyValue保存属性名和对应的值
+public class PropertyValue {
+    private final String fieldName;
+
+    private final Object fieldValue;
+
+    public PropertyValue(String fieldName, Object fieldValue) {
+        this.fieldName = fieldName;
+        this.fieldValue = fieldValue;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public Object getFieldValue() {
+        return fieldValue;
+    }
+}
+```
+我们在实例化bean并放到beanFactory的时候，同时就给这个bean注入属性。从beanDefination的properiesList依次取出键值。
+```java
+    //getDeclaredField是可以获取一个类本身的所有字段.
+    //getField只能获取类及其父类的public字段.
+    protected void setPropertyValueToBean(Object bean, BeanDefinition beanDefinition) throws NoSuchFieldException, IllegalAccessException {
+        for(PropertyValue propertyValue: beanDefinition.getProperiesList().getList()){
+            Field declaredField = bean.getClass().getDeclaredField(propertyValue.getFieldName());
+            declaredField.setAccessible(true);
+            declaredField.set(bean, propertyValue.getFieldValue());
+        }
+    }
+```
