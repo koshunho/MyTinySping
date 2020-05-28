@@ -209,10 +209,10 @@ protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldExc
             Object o = beanDefinition.getBeanClass().newInstance();
 
             //step5 registerBeanDefination就setBean() 改为 在这里setBean()!!!
-            // 创建出新的实例之后就setBean，不等赋值再放。是因为！！！！
+            //创建出新的实例之后就setBean，不等赋值再放。是因为！！！！
             //创建完空的bean(空的bean表示空构造函数构造出的bean)后，就放入beanDefinition中，
-            // 这样假设有循环依赖 a ref b，b ref a时，a ref b。因此b先创建并指向a，此时的a还不是完全体，但是引用已经连上了，
-            // 然后创建好了b。然后b ref a的时候，a已经创建完毕。
+            //这样假设有循环依赖 a ref b，b ref a时，a ref b。因此b先创建并指向a，此时的a还不是完全体，但是引用已经连上了
+            //然后创建好了b。然后b ref a的时候，a已经创建完毕。
             beanDefinition.setBean(o);
             //5555太妙了吧！！！！
 
