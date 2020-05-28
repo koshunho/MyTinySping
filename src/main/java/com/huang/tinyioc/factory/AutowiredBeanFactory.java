@@ -1,8 +1,11 @@
-package com.huang.tinyioc;
+package com.huang.tinyioc.factory;
+
+import com.huang.tinyioc.BeanDefinition;
+import com.huang.tinyioc.PropertyValue;
 
 import java.lang.reflect.Field;
 
-public class AutowiredBeanFactory extends AbstractBeanFactory{
+public class AutowiredBeanFactory extends AbstractBeanFactory {
     protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldException {
         try {
             //实例化

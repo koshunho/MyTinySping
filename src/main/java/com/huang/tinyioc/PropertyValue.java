@@ -1,6 +1,5 @@
 package com.huang.tinyioc;
 
-import java.util.List;
 
 public class PropertyValue {
     private final String fieldName;

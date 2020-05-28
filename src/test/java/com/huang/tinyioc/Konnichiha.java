@@ -7,5 +7,7 @@ public class Konnichiha {
         System.out.println(text);
     }
 
-//    不写set方法也可以吗？
+    public void setText(String text) {
+        this.text = text;
+    }
 }

@@ -1,4 +1,6 @@
-package com.huang.tinyioc;
+package com.huang.tinyioc.factory;
+
+import com.huang.tinyioc.BeanDefinition;
 
 public interface BeanFactory {
     Object getBean(String name);

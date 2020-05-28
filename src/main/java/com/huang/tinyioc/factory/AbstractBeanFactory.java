@@ -1,9 +1,12 @@
-package com.huang.tinyioc;
+package com.huang.tinyioc.factory;
+
+import com.huang.tinyioc.BeanDefinition;
+import com.huang.tinyioc.factory.BeanFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractBeanFactory implements BeanFactory{
+public abstract class AbstractBeanFactory implements BeanFactory {
 
     //容器
     private Map<String, BeanDefinition> map = new HashMap<String, BeanDefinition>();

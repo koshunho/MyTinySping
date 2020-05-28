@@ -8,6 +8,9 @@ public class BeanDefinition {
 
     private Class beanClass;
 
+    //!!!!!!!!2020.5.28 2:32
+    // private ProperiesList properiesList = new ProperiesList();
+
     private ProperiesList properiesList;
 
     public BeanDefinition() {
