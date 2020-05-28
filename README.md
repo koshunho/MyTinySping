@@ -139,3 +139,92 @@ public class PropertyValue {
 1. 在BeanDefination中 private ProperiesList properiesList = new ProperiesList(); 这样创建一个BeanDefination的实例的时候也就创建了一个ProperiesList
 
 2. 在processProperty方法体中自己new一个ProperiesList，再set进上面方法传进来的beanDefinition中
+
+### Step5：bean注入bean
+Step4只是完成了简单类型的注入，但是没有处理bean之间的依赖。
+
+定义一个类叫BeanReference。
+
+然后在XmlBeanDefinationReader中，最后一步给属性赋值的时候就要判断一下。
+```java
+    //为bean注入bean。
+/*    假设xml文件是这么写的。有一个Bean
+    <bean name="helloWorldService" class="us.codecraft.tinyioc.HelloWorldService">
+        <property name="text" value="Hello World!"></property>
+        <property name="outputService" ref="outputService"></property>
+    </bean>*/
+    //所以判断当前property申明的是简单类型的话就看value!=null
+    //是一个ref的话那说明value == null，因为就没有value嘛是ref
+    private void processProperty(Element ele,BeanDefinition beanDefinition) {
+        NodeList propertyNode = ele.getElementsByTagName("property");
+
+        ProperiesList properiesList = new ProperiesList();
+
+        for (int i = 0; i < propertyNode.getLength(); i++) {
+            Node node = propertyNode.item(i);
+            if (node instanceof Element) {
+                Element propertyEle = (Element) node;
+                String name = propertyEle.getAttribute("name");
+                String value = propertyEle.getAttribute("value");
+                if (value != null && value.length() > 0) {
+                    properiesList.addPropertyValue(new PropertyValue(name, value));
+                } else {
+                    String ref = propertyEle.getAttribute("ref");
+                    if (ref == null || ref.length() == 0) {
+                        throw new IllegalArgumentException;
+                    }
+                    BeanReference beanReference = new BeanReference(ref);
+                    properiesList.addPropertyValue(new PropertyValue(name, beanReference));
+                }
+            }
+        }
+        beanDefinition.setProperiesList(properiesList);
+    }
+```
+最后仍然是存到这个beanDefition的ProperiesList中，等待后面实例化的时候再对bean赋值。
+
+#### 怎么避免循环依赖？？？
+之前我们的BeanFactory，在register bean的时候就创建出bean的实例保存到对应的beanDefinition了。
+
+为了避免循环依赖，我们就在getBean的时候才创建出bean。
+
+所谓循环依赖，就是
+```java
+    <bean name="nihao" class="com.huang.tinyioc.Nihao">
+        <property name="konnichiha" ref="konnichiha"/>
+    </bean>
+
+    <bean name="konnichiha" class="com.huang.tinyioc.Konnichiha">
+        <property name="text" value="こんにちは！"></property>
+        <property name="nihao" ref="nihao"></property>
+    </bean>
+```
+在createBean()方法中，创建完空的bean(空的bean表示空构造函数构造出的bean)后，就放入beanDefinition中，这样a ref b，b ref a时，a ref b因此b先创建并指向a，此时的a还不是完全体，但是引用已经连上了，然后创建好了b。然后b ref a的时候，a已经创建完毕。
+
+最妙的就是这里。
+```java
+protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldException {
+        try {
+            //实例化
+            Object o = beanDefinition.getBeanClass().newInstance();
+
+            //step5 registerBeanDefination就setBean() 改为 在这里setBean()!!!
+            // 创建出新的实例之后就setBean，不等赋值再放。是因为！！！！
+            //创建完空的bean(空的bean表示空构造函数构造出的bean)后，就放入beanDefinition中，
+            // 这样假设有循环依赖 a ref b，b ref a时，a ref b。因此b先创建并指向a，此时的a还不是完全体，但是引用已经连上了，
+            // 然后创建好了b。然后b ref a的时候，a已经创建完毕。
+            beanDefinition.setBean(o);
+            //5555太妙了吧！！！！
+
+            //赋值
+            setPropertyValueToBean(o, beanDefinition);
+
+            return o;
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+```
