@@ -108,3 +108,34 @@ public class PropertyValue {
         }
     }
 ```
+### Step 4：读取xml配置来初始化bean
+1.初始化IO配置
+
+URL类定位xml文件，url.openConnect().connect()即可定位并打开文件，利用getInputStream获得文件输入流。
+
+2.读取xml本地文件
+
+通过XMLBeanDefinitionReader类和DocumentBuilder对xml进行解析。先根据bean定位到所有的bean。
+
+##### XMLBeanDefinitionReader的流程：获取inputStream-->解析inputStream为document-->从document中解析出bean并进行注册相关操作-->遍历逐项进行注册-->单个进行注册-->将数据存在PropertiesList中后赋值给每个属性
+
+3.通过之前已有的操作进行实例化已经属性初始化
+
+根据类名和实例名构建一个空实例，然后每一个bean中定位property，利用PropertiesList类和PV类实现对bean属性的赋值。
+
+#### 这一步中实操中遇到的问题
+1.最先是在写配置文件时，我用来测试注入的实体类Konnichiha怎么也都无法被识别出来。Konnichiha类位于test下，跟main中是同包的，在XML中写类的全限定名的时候也有提示，但是还是一直爆红。查看Target中也没有这个类，感觉很奇怪。
+
+最后发现是在Module Setting中，没有把test设置为Test Resources。。。最后加进去就能读出来了。
+
+导入命名空间的时候也一直爆红，不过不影响使用，忽略掉就好了。
+
+2.这个问题就有些隐蔽了。在测试XmlBeanDefinitionReaderTest的时候XmlBeanDefinitionReader.processProperty(Element element, BeanDefinition beanDefinition)方法在beanDefinition.getPropertiesList().addPropertyValue(new PropertyValue(name,value))步骤一直报空指针，百思不得其解，测了IO也能正常读。
+
+排错了好久，发现原因是传递进来的beanDefinition在上个方法中只是new出来的只有BeanDefinition beanDefinition = new BeanDefinition()，所以beanDefinition.getPropertiesList()其实是null，在addPropertyValue的时候会报空指针。
+
+两个解决办法：
+
+1. 在BeanDefination中 private ProperiesList properiesList = new ProperiesList(); 这样创建一个BeanDefination的实例的时候也就创建了一个ProperiesList
+
+2.在processProperty方法体中自己new一个ProperiesList，再set进上面方法传进来的beanDefinition中
