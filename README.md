@@ -140,7 +140,7 @@ public class PropertyValue {
 
 2. 在processProperty方法体中自己new一个ProperiesList，再set进上面方法传进来的beanDefinition中
 
-### Step5：bean注入bean
+### Step 5：bean注入bean
 Step4只是完成了简单类型的注入，但是没有处理bean之间的依赖。
 
 定义一个类叫BeanReference。
