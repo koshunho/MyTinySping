@@ -228,3 +228,36 @@ protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldExc
         return null;
     }
 ```
+### Step 6：引入ApplicationContext接口
+我们正常使用Spring获取bean应该是这样的：
+```java
+    @Test
+    public void test() throws Exception {
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("MyTinySpring.xml");
+        Konnichiha konnichiha = (Konnichiha) applicationContext.getBean("konnichiha");
+        konnichiha.say();
+    }
+```
+而不应该是这样的：
+```java
+    @Test
+    public void test() throws Exception {
+        //应该从test出发
+
+        // 1.读取配置
+        XmlBeanDefinitionReader xmlBeanDefinitionReader = new XmlBeanDefinitionReader(new ResourceLoader());
+        xmlBeanDefinitionReader.loadBeanDefinitions("MyTinySpring.xml");
+
+        // 2.初始化BeanFactory
+        BeanFactory beanFactory = new AutowiredBeanFactory();
+        for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : xmlBeanDefinitionReader.getRegistry().entrySet()) {
+            beanFactory.registerBeanDefination(beanDefinitionEntry.getKey(), beanDefinitionEntry.getValue());
+        }
+
+        // 3.注册bean并获取bean
+        Konnichiha konnichiha = (Konnichiha) beanFactory.getBean("konnichiha");
+        konnichiha.say();
+
+    }
+```
+Step 6就是将这些函数全部整合进行一个context包中以后就只需要调用一个简单的函数即可，无需关注其他的函数。
