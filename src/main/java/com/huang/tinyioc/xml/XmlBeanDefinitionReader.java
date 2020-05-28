@@ -1,6 +1,7 @@
 package com.huang.tinyioc.xml;
 
 import com.huang.tinyioc.BeanDefinition;
+import com.huang.tinyioc.BeanReference;
 import com.huang.tinyioc.ProperiesList;
 import com.huang.tinyioc.PropertyValue;
 import com.huang.tinyioc.io.ResourceLoader;
@@ -12,7 +13,6 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
-import java.util.Properties;
 
 //通过XMLBeanDefinitionReader类和DocumentBuilder对xml进行解析。
 // 先根据bean定位到所有的bean，根据类名和实例名构建一个空实例，
@@ -66,14 +66,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader{
         getRegistry().put(name, beanDefinition);
     }
 
-    //将数据存在PropertiesList中
-    //2020.5.28凌晨测试：一直报空指针，百思不得其解。
-    //原来的是beanDefinition.getProperiesList().addPropertyValue(new PropertyValue(name,value));
-    //原因是传递进来的beanDefinition在上个方法中只是new出来的 BeanDefinition beanDefinition = new BeanDefinition()，
-    // 所以beanDefinition.getProperiesList()其实是null，在addPropertyValue的时候会报空指针
-
-    //两个解决办法：1. 在BeanDefination中 private ProperiesList properiesList = new ProperiesList(); 这样创建一个BeanDefination的实例的时候也就创建了一个ProperiesList
-    //2.在processProperty方法体中自己new一个ProperiesList，再set进上面方法传进来的beanDefinition中
+    //为bean注入bean。
+/*    假设xml文件是这么写的。有一个Bean
+    <bean name="helloWorldService" class="us.codecraft.tinyioc.HelloWorldService">
+        <property name="text" value="Hello World!"></property>
+        <property name="outputService" ref="outputService"></property>
+    </bean>*/
+    //所以判断当前property申明的是简单类型的话就看value!=null
+    //是一个ref的话那说明value == null，因为就没有value嘛是ref
     private void processProperty(Element ele,BeanDefinition beanDefinition) {
         NodeList propertyNode = ele.getElementsByTagName("property");
 
@@ -85,7 +85,17 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader{
                 Element propertyEle = (Element) node;
                 String name = propertyEle.getAttribute("name");
                 String value = propertyEle.getAttribute("value");
-                properiesList.addPropertyValue(new PropertyValue(name,value));
+                if (value != null && value.length() > 0) {
+                    properiesList.addPropertyValue(new PropertyValue(name, value));
+                } else {
+                    String ref = propertyEle.getAttribute("ref");
+                    if (ref == null || ref.length() == 0) {
+                        throw new IllegalArgumentException("Configuration problem: <property> element for property '"
+                                + name + "' must specify a ref or value");
+                    }
+                    BeanReference beanReference = new BeanReference(ref);
+                    properiesList.addPropertyValue(new PropertyValue(name, beanReference));
+                }
             }
         }
 

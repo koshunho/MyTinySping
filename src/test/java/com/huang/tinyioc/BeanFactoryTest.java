@@ -18,13 +18,13 @@ public class BeanFactoryTest {
         XmlBeanDefinitionReader xmlBeanDefinitionReader = new XmlBeanDefinitionReader(new ResourceLoader());
         xmlBeanDefinitionReader.loadBeanDefinitions("MyTinySpring.xml");
 
-        // 2.初始化BeanFactory并注册bean
+        // 2.初始化BeanFactory
         BeanFactory beanFactory = new AutowiredBeanFactory();
         for (Map.Entry<String, BeanDefinition> beanDefinitionEntry : xmlBeanDefinitionReader.getRegistry().entrySet()) {
             beanFactory.registerBeanDefination(beanDefinitionEntry.getKey(), beanDefinitionEntry.getValue());
         }
 
-        // 3.获取bean
+        // 3.注册bean并获取bean
         Konnichiha konnichiha = (Konnichiha) beanFactory.getBean("konnichiha");
         konnichiha.say();
 
