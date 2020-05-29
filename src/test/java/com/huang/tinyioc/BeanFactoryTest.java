@@ -25,8 +25,8 @@ public class BeanFactoryTest {
         }
 
         // 3.注册bean并获取bean
-        Konnichiha konnichiha = (Konnichiha) beanFactory.getBean("konnichiha");
-        konnichiha.say();
+        KonnichihaImpl konnichihaImpl = (KonnichihaImpl) beanFactory.getBean("konnichiha");
+        konnichihaImpl.say();
 
     }
 

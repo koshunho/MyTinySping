@@ -191,10 +191,10 @@ Step4只是完成了简单类型的注入，但是没有处理bean之间的依�
 所谓循环依赖，就是
 ```java
     <bean name="nihao" class="com.huang.tinyioc.Nihao">
-        <property name="konnichiha" ref="konnichiha"/>
+        <property name="konnichihaImpl" ref="konnichihaImpl"/>
     </bean>
 
-    <bean name="konnichiha" class="com.huang.tinyioc.Konnichiha">
+    <bean name="konnichihaImpl" class="com.huang.tinyioc.KonnichihaImpl">
         <property name="text" value="こんにちは！"></property>
         <property name="nihao" ref="nihao"></property>
     </bean>
