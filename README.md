@@ -109,6 +109,142 @@ public class PropertyValue {
     }
 ```
 ### Step 4：读取xml配置来初始化bean
+定义BeanDefinitionReader接口，提供void loadBeanDefinitions(String location)方法从指定位置获取相应的配置来进行初始化，定义抽象类AbstractBeanDefinitionReader,其中一个实现是XmlBeanDefinitionReader。
+```java
+public interface BeanDefinitionReader {
+    void loadBeanDefinitions(String location) throws Exception;
+}
+```
+
+```java
+public abstract class AbstractBeanDefinitionReader implements BeanDefinationReader {
+    
+    // 保存从配置文件中加载的所有的 beanDefinition 对象
+    private Map<String, BeanDefinition> registry;
+
+    /**
+     * 依赖 ResourceLoader，该类又依赖 UrlResource 
+     * UrlResource 继承自 Spring 自带的 Resource 内部资源定位接口
+     * Resource 接口，标识一个外部资源。通过 getInputStream() 方法 获取资源的输入流 。
+     * UrlResource 实现 Resource 接口的资源类，通过 URL 获取资源。
+     * ResourceLoader 资源加载类。通过 getResource(String) 方法获取一个 Resource 对象，是获取 Resource 的主要途径.
+     */
+    private ResourceLoader resourceLoader;
+
+    public AbstractBeanDefinitionReader(ResourceLoader resourceLoader) {
+        this.registry = new HashMap<String, BeanDefinition>();
+        this.resourceLoader = resourceLoader;
+    }
+
+    public Map<String, BeanDefinition> getRegistry() {
+        return registry;
+    }
+
+    public ResourceLoader getResourceLoader() {
+        return resourceLoader;
+    }
+}
+```
+
+```java
+public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader{
+    public XmlBeanDefinitionReader(ResourceLoader resourceLoader) {
+        super(resourceLoader);
+    }
+
+    //获取inputStream，调用doLoadBeanDefinitions()方法
+    public void loadBeanDefinitions(String location) throws Exception {
+        InputStream inputStream = getResourceLoader().getResource(location).getInputStream();
+        doLoadBeanDefinitions(inputStream);
+    }
+
+    //解析inputStream为doc，调用registerBeanDefinitions(doc)
+    protected void doLoadBeanDefinitions(InputStream inputStream) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = factory.newDocumentBuilder();
+        // 输入流转换成对应的 Document 对象便于获取对应的元素
+        Document doc = docBuilder.parse(inputStream);
+        // 解析bean
+        registerBeanDefinitions(doc);
+        inputStream.close();
+    }
+
+    //进行bean注册相关操作，调用parseBeanDefinitions(root)
+    public void registerBeanDefinitions(Document doc) {
+        // 获取文件中包含的元素 <beans></beans>。是beans!!!beans!!!!beans!!! 不是bean，下面才是
+        Element root = doc.getDocumentElement();
+
+        parseBeanDefinitions(root);
+    }
+    //遍历逐项进行注册
+    protected void parseBeanDefinitions(Element root) {
+        // 获取元素包含的子节点链 <bean></bean> 链。 
+        NodeList nl = root.getChildNodes();
+        for (int i = 0; i < nl.getLength(); i++) {
+            // 获取子节点链上对应的子节点 单个<bean></bean>
+            Node node = nl.item(i);
+            if (node instanceof Element) {
+                Element ele = (Element) node;
+                // 将节点强转为 Element 对象并进行解析
+                processBeanDefinition(ele);
+            }
+        }
+    }
+    //单个进行注册
+    protected void processBeanDefinition(Element ele) {
+        // 获取子节点对应的属性（name，class）来对应 Bean
+        // <bean name="" class=""></bean>
+        String name = ele.getAttribute("name");
+        String className = ele.getAttribute("class");
+        // 创建与之对应的 BeanDefinition ，并设置相应的属性
+        BeanDefinition beanDefinition = new BeanDefinition();
+        // 将节点包含的 Bean相关的属性信息注入创建的 BeanDefinition 中。
+        processProperty(ele,beanDefinition);
+        beanDefinition.setBeanClassName(className);
+        // 统一管理（HashMap）通过配置文件加载的 beanDefinition 对象
+        getRegistry().put(name, beanDefinition);
+    }
+
+    //为bean注入bean。
+/*    假设xml文件是这么写的。有一个Bean
+    <bean name="helloWorldService" class="us.codecraft.tinyioc.HelloWorldService">
+        <property name="text" value="Hello World!"></property>
+        <property name="outputService" ref="outputService"></property>
+    </bean>*/
+    //所以判断当前property申明的是简单类型的话就看value!=null
+    //是一个ref的话那说明value == null，因为就没有value嘛是ref
+    private void processProperty(Element ele,BeanDefinition beanDefinition) {
+        // 获取元素对应的 Property 节点
+        // <bean><property name="" value=""></property></bean>
+        NodeList propertyNode = ele.getElementsByTagName("property");
+
+        ProperiesList properiesList = new ProperiesList();
+
+        for (int i = 0; i < propertyNode.getLength(); i++) {
+            // 遍历节点并取出节点对应的 key-value，添加到 BeanDefinition 对应的属性中
+            Node node = propertyNode.item(i);
+            if (node instanceof Element) {
+                Element propertyEle = (Element) node;
+                String name = propertyEle.getAttribute("name");
+                String value = propertyEle.getAttribute("value");
+                if (value != null && value.length() > 0) {
+                    properiesList.addPropertyValue(new PropertyValue(name, value));
+                } else {
+                    String ref = propertyEle.getAttribute("ref");
+                    if (ref == null || ref.length() == 0) {
+                        throw new IllegalArgumentException("Configuration problem: <property> element for property '"
+                                + name + "' must specify a ref or value");
+                    }
+                    BeanReference beanReference = new BeanReference(ref);
+                    properiesList.addPropertyValue(new PropertyValue(name, beanReference));
+                }
+            }
+        }
+
+        beanDefinition.setProperiesList(properiesList);
+    }
+}
+```
 　　1.初始化IO配置
 
 　　URL类定位xml文件，url.openConnect().connect()即可定位并打开文件，利用getInputStream获得文件输入流。
