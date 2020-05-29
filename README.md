@@ -481,9 +481,13 @@ public class ProxyTest {
 　　许多 AOP框架会将 advice 模拟为一个拦截器(interceptor), 并且在 join point 上维护多个 advice, 进行层层拦截。
   
 　　1. Before：在被代理方法执行之前执行，它不能控制被代理方法的执行与否
+  
 　　2. After returning：在被代理方法正常return之后执行
+  
 　　3. After throwing：在被代理方法抛出异常后执行
+  
 　　4. After (finally)：在上述两种情况（正常return或抛出异常）之后执行
+  
 　　5. Around：在被代理方法前后执行。只有该方法才能控制被代理方法执行与否（）
 
 ##### Joinpoint：方法的执行点！！！！！！！！
