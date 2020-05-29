@@ -564,14 +564,19 @@ public class ProxyInvocationHandler implements InvocationHandler {
 首先定义方法的增强advice，也就是MethodInterceptor。正如之前所说，需要主动通过return JoinPoint.proceed()才可以得到被代理方法的原始返回值
 ```java
 public class LogInterceptor implements MethodInterceptor {
+
     //MethodInvocation相当于方法的执行点！！！！！！！！JoinPoint
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         long time = System.nanoTime();
+        
         System.out.println("Invocation of Method " + invocation.getMethod().getName() + " start!");
+        
         Object proceed = invocation.proceed();
+        
         System.out.println("Invocation of Method " + invocation.getMethod().getName() + " end! takes " + (System.nanoTime() - time)
                 + " nanoseconds.");
+                
         return proceed;
     }
 }
@@ -583,13 +588,20 @@ public class ProxyTest {
     public void testProxy() throws Exception {
         //先创建一个业务实现类对象(Impl) 和 一个代理类对象
         ApplicationContext applicationContext = new ClassPathXmlApplicationContext("MyTinySpring.xml");
+        
         //真实对象！Impl!
         LogInterceptor logInterceptor = new LogInterceptor();
+        
         KonnichihaImpl konnichiha = (KonnichihaImpl) applicationContext.getBean("konnichiha");
+        
         ProxyInvocationHandler pih = new ProxyInvocationHandler();
+        
         pih.setTarget(konnichiha);
+        
         pih.setMethodInterceptor(logInterceptor);
+        
         Konnichiha proxy = (Konnichiha)pih.getProxy();
+        
         proxy.say();
     }
 }
