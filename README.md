@@ -397,3 +397,200 @@ protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldExc
     }
 ```
 Step 6就是将这些函数全部整合进行一个context包中以后就只需要调用一个简单的函数即可，无需关注其他的函数。
+
+### Step 7：动态代理实现AOP织入
+先写一个通用的动态代理实现的类，所有的代理对象设置为Object即可。
+
+JDK的动态代理需要了解2个类：InvocationHandler、Proxy
+
+```java
+//invoke()：当我们通过动态代理对象调用一个方法的时候，这个方法的调用就会被 转 发 到实现InvocationHandler接口的invoke()方法 
+public interface invocationHandler{
+   //参数： proxy：调用该方法的代理实例
+   //method: 对应于调用代理实例上的接口方法的实例
+   //args:包含的方法调用传递代理实例的参数值的对象的阵列
+   public Object invoke(Object proxy, Methoid method, Object[] args) throw Throwable;
+}
+```
+```java
+public class Proxy{
+...
+protected InvocationHandler h;
+...
+//loader:类加载器来定义代理类
+//interfaces:代理类实现的 接 口 列表。 接 口  接 口  接 口  接 口  接 口  接 口  接 口  接 口 
+//h:调度方法调用的调用处理函数
+public static Object newProxyInstance(ClassLoader loader, class<?>[] interfaces, InvocationHandler h){...}
+}
+```
+
+现在先不管连接点、advice那些，先来试试看自己写的。
+```java
+public class ProxyInvocationHandler implements InvocationHandler {
+    private Object target;
+
+    public void setTarget(Object target) {
+        this.target = target;
+    }
+
+    //生成代理类
+    public Object getProxy(){
+        return Proxy.newProxyInstance(this.getClass().getClassLoader(),target.getClass().getInterfaces(),this);
+    }
+
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        before(method.getName());
+        Object result = method.invoke(target, args);
+        after(method.getName());
+        return result;
+    }
+
+    public void before(String methodName){
+        System.out.println("开始执行"+methodName+"方法！");
+    }
+
+    public void after(String methodName){
+        System.out.println(methodName+"方法执行完毕！");
+    }
+}
+```
+然后调用测试看看。发现方法被增强了
+```java
+public class ProxyTest {
+    @Test
+    public void testProxy() throws Exception {
+        //先创建一个业务实现类对象(Impl) 和 一个代理类对象
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("MyTinySpring.xml");
+        //真实对象！Impl!
+        KonnichihaImpl konnichiha = (KonnichihaImpl) applicationContext.getBean("konnichiha");
+        ProxyInvocationHandler pih = new ProxyInvocationHandler();
+        pih.setTarget(konnichiha);
+        Konnichiha proxy = (Konnichiha)pih.getProxy();
+        proxy.say();
+    }
+}
+```
+但是before()和after()方法是我们手写的，这个应该交给用户来写吧？
+
+#### MethodInterceptor和MethodInvocation
+这两个角色都是AOP联盟的标准，它们分别对应AOP中两个基本角色：Advice和Joinpoint。Advice定义了在切点指定的逻辑，而Joinpoint则代表切点。
+
+　　##### Advice（增强！！！！！！！）：
+  　由 aspect 添加到特定的 join point(即满足 point cut 规则的 join point) 的一段代码。
+   
+　　许多 AOP框架会将 advice 模拟为一个拦截器(interceptor), 并且在 join point 上维护多个 advice, 进行层层拦截。
+  
+　　1. Before：在被代理方法执行之前执行，它不能控制被代理方法的执行与否
+　　2. After returning：在被代理方法正常return之后执行
+　　3. After throwing：在被代理方法抛出异常后执行
+　　4. After (finally)：在上述两种情况（正常return或抛出异常）之后执行
+　　5. Around：在被代理方法前后执行。只有该方法才能控制被代理方法执行与否（）
+
+　　##### Joinpoint：方法的执行点！！！！！！！！
+　　有返回值的@Advice方法，你需要主动通过return JoinPoint.proceed()才可以得到被代理方法的原始返回值，如果直接return 其他值并且不调用JoinPoint.proceed()，那么被代理方法将直接被忽略不执行。
+  
+在ProxyInvocationHandler里，我们只需要将MethodInterceptor放入对象的方法调用即可。
+
+导入aopalliance包。
+```java
+public class MethodInvocationImpl implements MethodInvocation {
+    private Object target;
+
+    private Method method;
+
+    private Object[] args;
+
+    public MethodInvocationImpl(Object target, Method method, Object[] args) {
+        this.target = target;
+        this.method = method;
+        this.args = args;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public Object[] getArguments() {
+        return args;
+    }
+
+    // 反射，相当于 target.method(args);即调用代理对象对应的方法
+    public Object proceed() throws Throwable {
+        return method.invoke(target, args);
+    }
+
+    public Object getThis() {
+        return target;
+    }
+
+    public AccessibleObject getStaticPart() {
+        return method;
+    }
+}
+```
+
+```java
+public class ProxyInvocationHandler implements InvocationHandler {
+    private Object target;
+
+    //MethodInterceptor相当于AOP的advice
+    private MethodInterceptor methodInterceptor;
+
+    public void setMethodInterceptor(MethodInterceptor methodInterceptor) {
+        this.methodInterceptor = methodInterceptor;
+    }
+
+    public void setTarget(Object target) {
+        this.target = target;
+    }
+
+    //生成代理类
+    public Object getProxy(){
+        return Proxy.newProxyInstance(this.getClass().getClassLoader(),target.getClass().getInterfaces(),this);
+    }
+    
+    //重写 InvocationHandler 对应的 invoke() 方法
+    //调用拦截器对应的方法
+    //通过反射获取对应的切点，再根据切点指定的逻辑进行执行
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        //这里需要一个MethodInvocation类型的参数，那么我们创建看看
+        return methodInterceptor.invoke(new MethodInvocationImpl(target,method,args));
+    }
+}
+```
+
+说了那么多我们来测试一下。
+
+首先定义方法的增强advice，也就是MethodInterceptor。正如之前所说，需要主动通过return JoinPoint.proceed()才可以得到被代理方法的原始返回值
+```java
+public class LogInterceptor implements MethodInterceptor {
+    //MethodInvocation相当于方法的执行点！！！！！！！！JoinPoint
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        long time = System.nanoTime();
+        System.out.println("Invocation of Method " + invocation.getMethod().getName() + " start!");
+        Object proceed = invocation.proceed();
+        System.out.println("Invocation of Method " + invocation.getMethod().getName() + " end! takes " + (System.nanoTime() - time)
+                + " nanoseconds.");
+        return proceed;
+    }
+}
+```
+然后把方法的增加set进代理类。
+```java
+public class ProxyTest {
+    @Test
+    public void testProxy() throws Exception {
+        //先创建一个业务实现类对象(Impl) 和 一个代理类对象
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("MyTinySpring.xml");
+        //真实对象！Impl!
+        LogInterceptor logInterceptor = new LogInterceptor();
+        KonnichihaImpl konnichiha = (KonnichihaImpl) applicationContext.getBean("konnichiha");
+        ProxyInvocationHandler pih = new ProxyInvocationHandler();
+        pih.setTarget(konnichiha);
+        pih.setMethodInterceptor(logInterceptor);
+        Konnichiha proxy = (Konnichiha)pih.getProxy();
+        proxy.say();
+    }
+}
+```
