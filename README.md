@@ -1,5 +1,20 @@
 # MyTinySping
-In order to deeply understand the core idea of Spring
+- [MyTinySping](#mytinysping)
+    + [Step 1: 创建BeanFactory](#step-1----beanfactory)
+    + [Step 2：使用容器来管理bean的创建](#step-2--------bean---)
+    + [Step 3：给bean赋值](#step-3--bean--)
+    + [Step 4：读取xml配置来初始化bean](#step-4---xml------bean)
+        * [XMLBeanDefinitionReader的流程](#xmlbeandefinitionreader------inputstream-----inputstream-document----document----bean-------------------------------------propertieslist---------)
+      - [这一步中实操中遇到的问题](#------------)
+    + [Step 5：bean注入bean](#step-5-bean--bean)
+      - [怎么避免循环依赖？](#-----------)
+    + [Step 6：引入ApplicationContext接口](#step-6---applicationcontext--)
+    + [Step 7：动态代理实现AOP织入](#step-7-------aop--)
+      - [MethodInterceptor和MethodInvocation](#methodinterceptor-methodinvocation)
+        * [Advice](#advice------------)
+        * [Joinpoint](#joinpoint---------------)
+
+
 
 ### Step 1: 创建BeanFactory
 
