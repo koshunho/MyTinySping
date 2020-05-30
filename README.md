@@ -493,6 +493,12 @@ public class ProxyTest {
 ##### Joinpoint：方法的执行点！！！！！！！！
 　　有返回值的@Advice方法，你需要主动通过return JoinPoint.proceed()才可以得到被代理方法的原始返回值，如果直接return 其他值并且不调用JoinPoint.proceed()，那么被代理方法将直接被忽略不执行。
   
+  <div align=center><img src="https://s1.ax1x.com/2020/05/30/tMIYh8.png"/></div> 
+  
+  这个图解释得很好。连接点和切点的概念我有些弄不清，看到一个例子：比如开车经过一条高速公路，这条高速公路上有很多个出口（连接点），但是我们不会每个出口都会出去，只会选择我们需要的那个出口（切点）开出去。
+
+　　简单可以理解为，每个出口都是连接点，但是我们使用的那个出口才是切点。每个应用有多个位置适合织入通知，这些位置都是连接点。但是只有我们选择的那个具体的位置才是切点。
+  
 在ProxyInvocationHandler里，我们只需要将MethodInterceptor放入对象的方法调用即可。
 
 导入aopalliance包。
