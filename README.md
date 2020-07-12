@@ -24,6 +24,53 @@ Step1中，我们是手动new一个bean的实例再放到容器中的。在这�
 这里说一下面向接口和面向抽象类编程的区别。
 
 面向接口变成就是你要实现接口中【所有所有】的方法，管你用不用得上；但是，假如有个抽象类去实现了这个接口（抽象类里面都是空方法，还可以自己添加新的方法），然后我们只需要去继承这个抽象类，重写其中我们需要的方法就可以了，用多少，就重写多少。
+
+举例，JUI的KeyAdapter就是一个抽象类，它实现了KeyListener接口。如果我们直接实现KeyListener接口，需要实现接口中所有方法。而KeyAdapter是一个抽象类，对所有可能的事件提供了空实现。我们通过继承这个抽象类，然后对自己所关心的方法进行重写就好，不必理会其他方法。
+```java
+public interface KeyListener extends EventListener {
+
+    public void keyTyped(KeyEvent e);
+
+    public void keyPressed(KeyEvent e);
+
+    public void keyReleased(KeyEvent e);
+}
+```
+注释解释得非常清楚了。
+
+Extend this class to create a <code>KeyEvent</code> listenerand override the methods for the events of interest. 
+
+(If you implement the <code>KeyListener</code> interface, you have to define all of the methods in it. 
+
+This abstract class defines null methods for them all, **so you can only have to define methods for events you care about.**)
+
+```java
+/**
+ * An abstract adapter class for receiving keyboard events.
+ * The methods in this class are empty. This class exists as
+ * convenience for creating listener objects.
+ * <P>
+ * Extend this class to create a <code>KeyEvent</code> listener
+ * and override the methods for the events of interest. (If you implement the
+ * <code>KeyListener</code> interface, you have to define all of
+ * the methods in it. This abstract class defines null methods for them
+ * all, so you can only have to define methods for events you care about.)
+ * <P>
+ * Create a listener object using the extended class and then register it with
+ * a component using the component's <code>addKeyListener</code>
+ * method. When a key is pressed, released, or typed,
+ * the relevant method in the listener object is invoked,
+ * and the <code>KeyEvent</code> is passed to it.
+ */
+public abstract class KeyAdapter implements KeyListener {
+    public void keyTyped(KeyEvent e) {}
+
+    public void keyPressed(KeyEvent e) {}
+
+    public void keyReleased(KeyEvent e) {}
+}
+```
+
 ```java
 //在BeanDefination中
     // 反射创建一个实例化对象：两步
@@ -55,6 +102,7 @@ Step1中，我们是手动new一个bean的实例再放到容器中的。在这�
         return null;
     }
 ```
+本项目大量运用这样的思想，保证拓展性。随着类层次变多，每一层需要处理的逻辑会减少，职责更加明确和单一，不论是编写还是理解都会更加容易。
 
 ### Step 3：给bean赋值
 
