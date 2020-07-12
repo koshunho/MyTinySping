@@ -339,6 +339,16 @@ Step4只是完成了简单类型的注入，但是没有处理bean之间的依�
 ```
 在createBean()方法中，创建完空的bean(空的bean表示空构造函数构造出的bean)后，就放入beanDefinition中，这样a ref b，b ref a时，a ref b因此b先创建并指向a，此时的a还不是完全体，但是引用已经连上了，然后创建好了b。然后b ref a的时候，a已经创建完毕。
 
+**再理解**:打个比方，像是做饭炒菜。之前都是准备好材料（把相关信息从xml读好后写进XMLReader的registry），然后就直接开始炒了（registerBeanDefination就直接实例化并设置进beanFactory）。
+
+而现在是先准备好材料（BeanDefinition），我等客人点A菜，我才开始炒A菜。如果A菜的构成需要B菜，B菜的构成却需要A菜，注意，客人点的是A菜。在炒菜的时候（也就是指createBean()方法），我先生成A菜的实例，然后马上放入beanFacotory。
+
+然后我才开始为A菜赋值，发现A菜的构成需要B菜。那么我来处理B菜，也开始炒B菜（也就是调用createBean()方法），却发现B菜的构成需要A菜，我就去找A菜，咦，发现有A菜的实例了（**即使A菜此时还不是完全体**），这样我就能炒好B菜了。
+
+于是B菜返回给A菜，A菜就进化成完全体了，嘻嘻。
+
+createBean()个人理解，就是为BeanDefinition这些材料注入灵魂，令它成为真正的完全体。
+
 最妙的就是这里。
 ```java
 protected Object createBean(BeanDefinition beanDefinition) throws NoSuchFieldException {
