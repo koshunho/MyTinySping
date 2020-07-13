@@ -676,3 +676,32 @@ public class ProxyTest {
     }
 }
 ```
+
+### Step 7.1：动态代理实现AOP织入(补充Step 4)
+使用Xpath。
+
+望文生义 --> XML + 路径
+
+**注意**：Xpath在读取Spring配置文件时无法通过selectNodes或selectSingleNode获取节点，是因为配置文件带有命名空间。
+
+### Step 8：AspectJ管理切面
+使用AspectJ管理切面。
+
+Step 7解决了怎么织入的问题，下面就是在哪里织入？Spring采用了AspectJ风格的标示性语句来表示在哪些位置进行织入，即哪些位置是point cut。类似下面的语句<aop:pointcut id="pointcut" expression="execution(public int aopxml.Calculator.*(int, int ))"/>。Spring可以对类和方法做插入，因此我们也要实现对类和方法表示point cut的功能。
+
+在AspectJExpressionPointcut中，
+1. 获得String expression即AspectJ风格表达式
+2. 创建PonitcutParser，即解析AspectJ风格表达式的解析器。
+3. expression被解析后就变成了pointcutExpression。即expression是输入，pointcutParser是输出，pointcutParser是解析器，将输入解析成输出。
+
+这个解析器怎么创建呢？直接new一个行不行啊？不行。
+
+正确的创建方式为：pointcutParser = PointcutParser.getPointcutParserSupportingSpecifiedPrimitivesAndUsingContextClassloaderForResolution(supportedPrimitives);
+
+后面的supportedPrimitives指的是执行的AspectJ语言风格的关键字，是一个set
+
+pointcutExpression是创建好了，但是有什么用呢？这个类可以用于匹配方法和类。
+
+### Step 9：将AOP融入Bean的创建过程
+
+这个好嗨难 待更
