@@ -702,6 +702,14 @@ Step 7解决了怎么织入的问题，下面就是在哪里织入？Spring采�
 
 pointcutExpression是创建好了，但是有什么用呢？这个类可以用于匹配方法和类。
 
+```java
+//匹配类
+pointcutExpression.couldMatchJoinPointsInType(targetClass);
+//匹配方法
+ShadowMatch shadowMatch = pointcutExpression.matchesMethodExecution(method);
+
+```
+
 ### Step 9：将AOP融入Bean的创建过程
 
 这个好嗨难 待更

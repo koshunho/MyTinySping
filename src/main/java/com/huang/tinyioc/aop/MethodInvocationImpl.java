@@ -18,22 +18,27 @@ public class MethodInvocationImpl implements MethodInvocation {
         this.args = args;
     }
 
+    @Override
     public Method getMethod() {
         return method;
     }
 
+    @Override
     public Object[] getArguments() {
         return args;
     }
 
+    @Override
     public Object proceed() throws Throwable {
         return method.invoke(target, args);
     }
 
+    @Override
     public Object getThis() {
         return target;
     }
 
+    @Override
     public AccessibleObject getStaticPart() {
         return method;
     }

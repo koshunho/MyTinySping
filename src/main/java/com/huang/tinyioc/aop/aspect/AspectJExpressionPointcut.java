@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /*1.获得String expression即AspectJ风格表达式
-  2.创建PonitcutParser，即解析AspectJ风格表达式的解析器。
-  3.expression被解析后就变成了pointcutExpression。即expression是输入，pointcutParser是输出，pointcutParser是解析器，将输入解析成输出。
+  2.创建PointcutParser，即解析AspectJ风格表达式的解析器。
+  3.expression被解析后就变成了pointcutExpression。即expression是输入，pointcutExpression是输出，pointcutParser是解析器，将输入解析成输出。
 
   这个解析器怎么创建呢？直接new一个行不行啊？不行。
   正确的创建方式为：pointcutParser = PointcutParser.getPointcutParserSupportingSpecifiedPrimitivesAndUsingContextClassloaderForResolution(supportedPrimitives);
