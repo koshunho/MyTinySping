@@ -575,24 +575,29 @@ public class MethodInvocationImpl implements MethodInvocation {
         this.method = method;
         this.args = args;
     }
-
+    
+    @Override
     public Method getMethod() {
         return method;
     }
 
+    @Override
     public Object[] getArguments() {
         return args;
     }
 
     // 反射，相当于 target.method(args);即调用代理对象对应的方法
+    @Override
     public Object proceed() throws Throwable {
         return method.invoke(target, args);
     }
 
+    @Override
     public Object getThis() {
         return target;
     }
 
+    @Override
     public AccessibleObject getStaticPart() {
         return method;
     }
